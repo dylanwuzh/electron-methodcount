@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Method Count</title>
+  <link type="text/css" rel="stylesheet" href="./index.css"/>
+  <link type="text/css" rel="stylesheet" href="./progress.css"/>
+</head>
+
+<body>
+<div class="page-container">
+  <div id="file-chosen" class="file-chosen">
+    <div id="upload-hint" class="upload-hint">点击选择文件或者拖动文件到框内</div>
+    <div id="file-name-container" class="file-name-container">
+      <div id="file-name" class="file-name">
+        <img id="file-type" class="file-type" src="../assets/file_apk.png"/>
+        <div id="file-name-display" class="file-name-display"></div>
+        <input id="file-path" class="file-path" disabled/>
+      </div>
+    </div>
+  </div>
+  <div id="calc-button-container" class="calc-button-container">
+    <div id="progress" class="progress" style="display: none;">
+      <div class="spinner">
+        <div class="spinner-container container1">
+          <div class="circle1"></div>
+          <div class="circle2"></div>
+          <div class="circle3"></div>
+          <div class="circle4"></div>
+        </div>
+        <div class="spinner-container container2">
+          <div class="circle1"></div>
+          <div class="circle2"></div>
+          <div class="circle3"></div>
+          <div class="circle4"></div>
+        </div>
+        <div class="spinner-container container3">
+          <div class="circle1"></div>
+          <div class="circle2"></div>
+          <div class="circle3"></div>
+          <div class="circle4"></div>
+        </div>
+      </div>
+    </div>
+    <div id="calc-button" class="calc-button">计算方法数</div>
+  </div>
+  <div id="method-count" class="method-count"></div>
+</div>
+<script>
+  require('./index.js')
+</script>
+</body>
+
+</html>

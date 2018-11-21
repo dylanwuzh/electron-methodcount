@@ -1,0 +1,24 @@
+{
+  "name": "electron-methodcount",
+  "version": "1.0.0",
+  "description": "calculate apk/dex/jar method count",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron",
+    "method",
+    "count"
+  ],
+  "author": "dylan wu",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^3.0.10"
+  },
+  "dependencies": {
+    "extract-zip": "^1.6.7",
+    "unzip": "^0.1.11"
+  }
+}

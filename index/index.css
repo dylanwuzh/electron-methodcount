@@ -1,0 +1,121 @@
+.page-container {
+  padding: 30px;
+}
+
+.file-name-container {
+  display: none;
+}
+
+.file-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-path {
+  display: none;
+}
+
+.file-name-display {
+  font-size: 16px;
+  color: #333333;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.upload-hint {
+  font-size: 14px;
+  color: #666666;
+  text-align: center;
+}
+
+.file-type {
+  width: 80px;
+  height: 80px;
+}
+
+.file-chosen {
+  width: 80%;
+  max-width: 500px;
+  height: 200px;
+  margin: 0 auto;
+  border: 1px solid #bbbbbb;
+  border-radius: 6px;
+  box-shadow: 2px 2px 4px #cccccc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  background-color: #ffffff;
+}
+
+.file-chosen:hover {
+  background-color: #fafafa;
+}
+
+.file-chosen:active {
+  background-color: #f5f5f5;
+}
+
+.calc-button-container {
+  width: 150px;
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #327EF3;
+  margin: 30px auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.calc-button-container:hover {
+  background-color: #196ae5;
+}
+
+.calc-button-container:active {
+  background-color: #0452c9;
+}
+
+.calc-button-container-disabled {
+  width: 150px;
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #7badf7;
+  margin: 30px auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.calc-button {
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+  color: #ffffff;
+  text-align: center;
+  user-select: none;
+}
+
+.calc-button-disabled {
+  width: 150px;
+  height: 40px;
+  line-height: 40px;
+  border-radius: 4px;
+  background-color: #7badf7;
+  font-size: 14px;
+  color: #ffffff;
+  text-align: center;
+  cursor: pointer;
+  margin: 30px auto;
+  user-select: none;
+}
+
+.method-count {
+  font-size: 16px;
+  color: #333333;
+}
