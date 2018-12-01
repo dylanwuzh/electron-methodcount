@@ -6,6 +6,8 @@ const fs = require('fs')
 const join = require('path').join
 const extract = require('extract-zip')
 
+const OUTPUT_DIR = 'tmp'
+
 let vCalcContainer = document.getElementById('calc-button-container')
 let vProgress = document.getElementById('progress')
 let vCalcButton = document.getElementById('calc-button')
@@ -48,12 +50,20 @@ vFileChosen.onclick = (event) => {
 }
 
 function chooseFile(filePath) {
+  progressing = false
   vFilePath.value = filePath
   vFileNameContainer.style.display = 'flex'
   vUploadHint.style.display = 'none'
 
   let index = filePath.lastIndexOf('/')
   vFileNameDisplay.innerText = (index >= 0 ? filePath.substring(index + 1) : '')
+
+  // 创建tmp文件夹
+  let configDir = remote.app.getPath('userData')
+  let output = join(configDir, OUTPUT_DIR)
+  if (!fs.existsSync(output)) {
+    fs.mkdirSync(output)
+  }
 
   let extension = _getFileExtension(filePath).toLowerCase()
   if (extension === 'apk') {
@@ -66,7 +76,7 @@ function chooseFile(filePath) {
 }
 
 // 计算方法数按钮的点击事件
-vCalcButton.onclick = () => {
+vCalcContainer.onclick = () => {
   // 检查环境变量：ANDROID_HOME
   let androidHome = process.env['ANDROID_HOME']
   if (androidHome === undefined || androidHome == null || androidHome.length === 0) {
@@ -89,6 +99,7 @@ vCalcButton.onclick = () => {
     return
   }
 
+  console.log('progress: ' + progressing)
   if (progressing) {
     return
   }
@@ -111,7 +122,7 @@ vCalcButton.onclick = () => {
 function execCalcApkMethodCmd(androidHome, apkFilePath) {
   // 解压apk文件
   let configDir = remote.app.getPath('userData')
-  let unzipDir = join(join(configDir, 'tmp'), new Date().getTime() + '')
+  let unzipDir = join(join(configDir, OUTPUT_DIR), new Date().getTime() + '')
   console.log(unzipDir)
   extract(apkFilePath, {dir: unzipDir}, function (err) {
     let files = fs.readdirSync(unzipDir)
@@ -119,7 +130,9 @@ function execCalcApkMethodCmd(androidHome, apkFilePath) {
 
     let dexFiles = []
     files.forEach((val, index) => {
-      if (reg.test(val)) {
+      let isDexFile = reg.test(val)
+      reg.lastIndex = 0
+      if (isDexFile) {
         dexFiles.push(val)
       }
 
@@ -154,13 +167,15 @@ function _calcDexFile(androidHome, unzipDir, dexFiles) {
       }
 
       if (index === dexFiles.length - 1) {
-        progressing = false
-        vCalcContainer.className = 'calc-button-container'
-        vProgress.style.display = 'none'
-        vMethodCount.innerText = `方法数：${methodCount}\n属性数：${fieldCount}`
+        _displayCalcCount({methodCount: methodCount, fieldCount: fieldCount})
+
+        // 删除unzip文件夹
+        console.log("rmdir: " + unzipDir)
+        removeDir(unzipDir, (err) => {
+          console.log(err)
+        })
       }
     })
-
   })
 }
 
@@ -179,29 +194,42 @@ function _handleCalcResult(res) {
       fieldCount += parseInt(v.substring('field_ids_size'.length + 1))
     }
 
-    progressing = false
-    vCalcContainer.className = 'calc-button-container'
-    vProgress.style.display = 'none'
-    vMethodCount.innerText = `方法数：${methodCount}\n属性数：${fieldCount}`
+    _displayCalcCount({methodCount: methodCount, fieldCount: fieldCount})
   })
 }
 
 // 计算dex文件的方法数
 function execCalcDexMethodCmd(androidHome, dexFilePath) {
-  dexFilePath = dexFilePath.replace(/\s*/g, '\ ')
-  let stdout = _execCmd(_joinDexdumpCmd(androidHome, dexFilePath))
-  _handleCalcResult(stdout)
+  let calcCmd = _joinDexdumpCmd(androidHome, dexFilePath)
+  childProcess.exec(calcCmd, (error, stdout, stderr) => {
+    _handleCalcResult(stdout)
+  })
 }
 
 // 计算jar文件的方法数
 function execCalcJarMethodCmd(androidHome, jarFilePath) {
   let dxPath = join(_getBuildToolsPath(androidHome), 'dx')
-  let outputPath = ''
+  let configDir = remote.app.getPath('userData')
+  let outDexDir = join(join(configDir, OUTPUT_DIR), new Date().getTime() + '')
+  if (!fs.existsSync(outDexDir)) {
+    fs.mkdirSync(outDexDir)
+  }
+  let outputPath = join(outDexDir, 'output.dex')
 
   let toDexCmd = `"${dxPath}" --dex --verbose --no-strict --output="${outputPath}" "${jarFilePath}"`
-  let stdout = _execCmd(toDexCmd)
-  let res = _execCmd(_joinDexdumpCmd(androidHome, outputPath))
-  _handleCalcResult(res)
+  console.log(toDexCmd)
+  childProcess.exec(toDexCmd, (error, stdout, stderr) => {
+    let calcCmd = _joinDexdumpCmd(androidHome, outputPath)
+    childProcess.exec(calcCmd, (error, stdout, stderr) => {
+      console.log(stdout)
+      _handleCalcResult(stdout)
+
+      // 删除output文件夹
+      removeDir(outDexDir, (err) => {
+        console.log(err)
+      })
+    })
+  })
 }
 
 function _execCmd(cmd) {
@@ -262,4 +290,39 @@ function _getBuildToolsPath(androidHome) {
     }
   })
   return join(buildToolsPath, dir)
+}
+
+function _displayCalcCount({methodCount, fieldCount}) {
+  progressing = false
+  vCalcContainer.className = 'calc-button-container'
+  vProgress.style.display = 'none'
+  vMethodCount.innerText = `Method count：${methodCount}\nField count：${fieldCount}`
+}
+
+function removeDir (dir, callback) {
+  fs.readdir(dir, (err, files) => {
+    /**
+     * @desc 内部循环遍历使用的工具函数
+     * @param {Number} index 表示读取files的下标
+     */
+    function next(index) {
+      // 如果index 等于当前files的时候说明循环遍历已经完毕，可以删除dir，并且调用callback
+      if (index == files.length) return fs.rmdir(dir, callback)
+      // 如果文件还没有遍历结束的话，继续拼接新路径，使用fs.stat读取该路径
+      let newPath = join(dir, files[index])
+      // 读取文件，判断是文件还是文件目录
+
+      fs.stat(newPath, (err, stat) => {
+        if (stat != undefined && stat != null && stat.isDirectory()) {
+          // 因为我们这里是深度循环，也就是说遍历玩files[index]的目录以后，才会去遍历files[index+1]
+          // 所以在这里直接继续调用removeDir，然后把循环下一个文件的调用放在当前调用的callback中
+          removeDir(newPath, () => next(index+1))
+        } else {
+          // 如果是文件，则直接删除该文件，然后在回调函数中调用遍历nextf方法，并且index+1传进去
+          fs.unlink(newPath, () => next(index+1))
+        }
+      })
+    }
+    next(0)
+  })
 }
